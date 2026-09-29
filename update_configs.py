@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 NEW_NAME = "خیار🥒"
 
-def rename_uri(uri, new_name=NEW_NAME):
+def rename_uri(uri, new_name="خیار🥒"):
     """Rename the fragment (name) part of a proxy URI to new_name"""
     try:
         if '#' in uri:
@@ -22,7 +22,7 @@ def rename_all(links):
     """Rename all URIs in a list"""
     return [rename_uri(link) for link in links]
 
-def json_to_uri(config, new_name=NEW_NAME):
+def json_to_uri(config, new_name="خیار🥒"):
     outbound = None
     for ob in config.get('outbounds', []):
         if ob.get('protocol') in ['vless', 'trojan', 'vmess', 'shadowsocks', 'ss']:
@@ -117,7 +117,7 @@ def json_to_uri(config, new_name=NEW_NAME):
     
     return None
 
-def whitedns_to_uri(proxy, new_name=NEW_NAME):
+def whitedns_to_uri(proxy, new_name="خیار🥒"):
     proto = proxy.get('type', '')
     name = proxy.get('name', new_name)
     server = proxy.get('server', '')
@@ -225,10 +225,6 @@ def whitedns_to_uri(proxy, new_name=NEW_NAME):
     
     return None
 
-def rename_all_uris(links):
-    """Rename all URIs in a list to NEW_NAME"""
-    return [rename_uri(link) for link in links]
-
 def fetch_bpb_normal():
     url = "https://vsix6rg3eolucr0ywl9sc5pkdwnpw55m.pages.dev/1XsTsfMUcBuMc3/sub/normal?app=xray"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -245,13 +241,15 @@ def fetch_twilight_hill():
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     b64 = urllib.request.urlopen(req, timeout=30).read().decode('utf-8')
     decoded = base64.b64decode(b64).decode('utf-8')
-    return rename_all_uris([line.strip() for line in decoded.strip().split('\n') if line.strip()])
+    links = [line.strip() for line in decoded.strip().split('\n') if line.strip()]
+    return links  # Will be renamed later
 
 def fetch_blueknight():
     url = "https://raw.githubusercontent.com/BlueKnightNet/blueknight_net-sub-link/refs/heads/blue-knight-net/BlueKnight.txt"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     text = urllib.request.urlopen(req, timeout=30).read().decode('utf-8')
-    return rename_all_uris([line.strip() for line in text.strip().split('\n') if line.strip()])
+    links = [line.strip() for line in text.strip().split('\n') if line.strip()]
+    return links  # Will be renamed later
 
 def fetch_whitedns():
     url = "https://raw.githubusercontent.com/iampedii/whitedns-sub/refs/heads/main/mihomo.yaml"
@@ -291,7 +289,7 @@ def fetch_freedom_house():
 def main():
     all_links = []
     
-    # Static sources (fetched once, but renamed every run)
+    # Static sources (fetched once)
     print("Fetching BPB Normal...")
     all_links.extend(fetch_bpb_normal())
     print("Fetching Twilight Hill...")
@@ -305,7 +303,7 @@ def main():
     print("Fetching Freedom House providers...")
     all_links.extend(fetch_freedom_house())
     
-    # Deduplicate
+    # Deduplicate FIRST
     seen = set()
     unique_links = []
     for link in all_links:
@@ -313,7 +311,11 @@ def main():
             seen.add(link)
             unique_links.append(link)
     
-    print(f"Total unique configs: {len(unique_links)}")
+    # THEN rename ALL unique links
+    print(f"Renaming {len(unique_links)} unique configs...")
+    unique_links = [rename_uri(link) for link in unique_links]
+    
+    print(f"Total unique renamed configs: {len(unique_links)}")
     
     with open('configs.txt', 'w') as f:
         f.write('\n'.join(unique_links))
